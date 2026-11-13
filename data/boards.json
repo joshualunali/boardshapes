@@ -1,11 +1,163 @@
 {
- "generated": "2026-11-13T03:16:04Z",
+ "generated": "2026-11-13T16:37:13Z",
  "units": {
   "lengths": "mm",
   "radius": "m",
   "weight": "kg"
  },
  "boards": [
+  {
+   "id": "burton-blossom-camber",
+   "brand": "Burton",
+   "name": "Blossom Camber",
+   "gender": "men",
+   "url": "https://www.burton.com/en-us/products/burton-blossom-camber-snowboard-229431",
+   "image": "https://www.burton.com/cdn/shop/files/2294315FAM_1.webp?v=1791989427&width=2880",
+   "description": "Shop the Blossom Camber Snowboard 2027. Designed by team riders who know exactly what they want.",
+   "shape_raw": "Twin",
+   "shape": "Twin",
+   "profile_raw": "Camber",
+   "profile": "camber",
+   "flex": 8.0,
+   "flex_text": "Stiff & Aggressive",
+   "flex_type": "Twin",
+   "terrain": {
+    "park": 10.0,
+    "all_mountain": 7.0,
+    "powder": 2.0
+   },
+   "level": null,
+   "tail_style": null,
+   "popular": true,
+   "sizes": [
+    {
+     "label": "144",
+     "weight_kg": [
+      45,
+      68
+     ],
+     "waist": 240.0,
+     "setback": 0.0,
+     "contact": 1030.0,
+     "radius": 7.0,
+     "sidecut_depth": 19.1,
+     "ref_stance": 505.0,
+     "nose_w": 278.2,
+     "tail_w": 278.2,
+     "eff_edge": 1075.0,
+     "length": 1440.0,
+     "taper": 0.0
+    },
+    {
+     "label": "149",
+     "weight_kg": [
+      45,
+      68
+     ],
+     "waist": 244.0,
+     "setback": 0.0,
+     "contact": 1080.0,
+     "radius": 7.3,
+     "sidecut_depth": 19.9,
+     "ref_stance": 530.0,
+     "nose_w": 283.9,
+     "tail_w": 283.9,
+     "eff_edge": 1125.0,
+     "length": 1490.0,
+     "taper": 0.0
+    },
+    {
+     "label": "152",
+     "weight_kg": [
+      54,
+      82
+     ],
+     "waist": 249.0,
+     "setback": 0.0,
+     "contact": 1110.0,
+     "radius": 7.5,
+     "sidecut_depth": 20.5,
+     "ref_stance": 530.0,
+     "nose_w": 290.0,
+     "tail_w": 290.0,
+     "eff_edge": 1155.0,
+     "length": 1520.0,
+     "taper": 0.0
+    },
+    {
+     "label": "155",
+     "weight_kg": [
+      54,
+      82
+     ],
+     "waist": 251.0,
+     "setback": 0.0,
+     "contact": 1140.0,
+     "radius": 7.7,
+     "sidecut_depth": 21.0,
+     "ref_stance": 560.0,
+     "nose_w": 293.1,
+     "tail_w": 293.1,
+     "eff_edge": 1185.0,
+     "length": 1550.0,
+     "taper": 0.0
+    },
+    {
+     "label": "158",
+     "weight_kg": [
+      68,
+      91
+     ],
+     "waist": 254.0,
+     "setback": 0.0,
+     "contact": 1170.0,
+     "radius": 7.9,
+     "sidecut_depth": 21.6,
+     "ref_stance": 560.0,
+     "nose_w": 297.2,
+     "tail_w": 297.2,
+     "eff_edge": 1215.0,
+     "length": 1580.0,
+     "taper": 0.0
+    },
+    {
+     "label": "162",
+     "weight_kg": [
+      82,
+      118
+     ],
+     "waist": 258.0,
+     "setback": 0.0,
+     "contact": 1210.0,
+     "radius": 8.2,
+     "sidecut_depth": 22.3,
+     "ref_stance": 560.0,
+     "nose_w": 302.7,
+     "tail_w": 302.7,
+     "eff_edge": 1255.0,
+     "length": 1620.0,
+     "taper": 0.0
+    },
+    {
+     "label": "162W",
+     "weight_kg": [
+      82,
+      118
+     ],
+     "waist": 266.0,
+     "setback": 0.0,
+     "contact": 1210.0,
+     "radius": 8.2,
+     "sidecut_depth": 22.3,
+     "ref_stance": 560.0,
+     "nose_w": 310.7,
+     "tail_w": 310.7,
+     "eff_edge": 1255.0,
+     "length": 1620.0,
+     "taper": 0.0
+    }
+   ]
+  },
   {
    "id": "burton-custom-camber",
    "brand": "Burton",
@@ -212,6 +364,295 @@
      "eff_edge": 1335.0,
      "length": 1700.0,
      "taper": 0.0
+    }
+   ]
+  },
+  {
+   "id": "burton-family-tree-hometown-hero-camber",
+   "brand": "Burton",
+   "name": "Family Tree Hometown Hero Camber",
+   "gender": "men",
+   "url": "https://www.burton.com/en-us/products/burton-family-tree-hometown-hero-camber-snowboard-222451",
+   "image": "https://www.burton.com/cdn/shop/files/2224513E1Q_1.webp?v=1791989427&width=2880",
+   "description": "Shop the Family Tree Hometown Hero Camber Snowboard 2027. Our time-tested quiver-of-one with Family Tree quality for your daily driver needs.",
+   "shape_raw": "Freeride Directional",
+   "shape": "Directional",
+   "profile_raw": "Directional Camber",
+   "profile": "directional_camber",
+   "flex": 5.5,
+   "flex_text": "Happy Medium",
+   "flex_type": "Twin",
+   "terrain": {
+    "park": 4.0,
+    "all_mountain": 7.0,
+    "powder": 8.0
+   },
+   "level": [
+    "Intermediate",
+    "Expert"
+   ],
+   "tail_style": null,
+   "popular": true,
+   "sizes": [
+    {
+     "label": "144",
+     "weight_kg": [
+      45,
+      68
+     ],
+     "waist": 240.0,
+     "setback": 40.0,
+     "contact": 1000.0,
+     "radius": 6.6,
+     "sidecut_depth": 18.8,
+     "ref_stance": 505.0,
+     "nose_w": 283.6,
+     "tail_w": 271.6,
+     "eff_edge": 1057.0,
+     "length": 1440.0,
+     "taper": 12.0
+    },
+    {
+     "label": "148",
+     "weight_kg": [
+      45,
+      68
+     ],
+     "waist": 244.0,
+     "setback": 40.0,
+     "contact": 1040.0,
+     "radius": 6.9,
+     "sidecut_depth": 19.6,
+     "ref_stance": 530.0,
+     "nose_w": 289.2,
+     "tail_w": 277.2,
+     "eff_edge": 1097.0,
+     "length": 1480.0,
+     "taper": 12.0
+    },
+    {
+     "label": "152",
+     "weight_kg": [
+      54,
+      82
+     ],
+     "waist": 248.0,
+     "setback": 40.0,
+     "contact": 1080.0,
+     "radius": 7.2,
+     "sidecut_depth": 20.4,
+     "ref_stance": 530.0,
+     "nose_w": 294.8,
+     "tail_w": 282.8,
+     "eff_edge": 1137.0,
+     "length": 1520.0,
+     "taper": 12.0
+    },
+    {
+     "label": "156",
+     "weight_kg": [
+      68,
+      91
+     ],
+     "waist": 252.0,
+     "setback": 40.0,
+     "contact": 1120.0,
+     "radius": 7.4,
+     "sidecut_depth": 21.1,
+     "ref_stance": 560.0,
+     "nose_w": 300.2,
+     "tail_w": 288.2,
+     "eff_edge": 1177.0,
+     "length": 1560.0,
+     "taper": 12.0
+    },
+    {
+     "label": "160",
+     "weight_kg": [
+      82,
+      118
+     ],
+     "waist": 258.0,
+     "setback": 40.0,
+     "contact": 1160.0,
+     "radius": 7.7,
+     "sidecut_depth": 21.8,
+     "ref_stance": 560.0,
+     "nose_w": 307.7,
+     "tail_w": 295.7,
+     "eff_edge": 1217.0,
+     "length": 1600.0,
+     "taper": 12.0
+    },
+    {
+     "label": "156W",
+     "weight_kg": [
+      68,
+      91
+     ],
+     "waist": 260.0,
+     "setback": 40.0,
+     "contact": 1120.0,
+     "radius": 7.4,
+     "sidecut_depth": 21.1,
+     "ref_stance": 560.0,
+     "nose_w": 308.2,
+     "tail_w": 296.2,
+     "eff_edge": 1177.0,
+     "length": 1560.0,
+     "taper": 12.0
+    },
+    {
+     "label": "160W",
+     "weight_kg": [
+      82,
+      118
+     ],
+     "waist": 265.0,
+     "setback": 40.0,
+     "contact": 1160.0,
+     "radius": 7.7,
+     "sidecut_depth": 21.8,
+     "ref_stance": 560.0,
+     "nose_w": 314.7,
+     "tail_w": 302.7,
+     "eff_edge": 1217.0,
+     "length": 1600.0,
+     "taper": 12.0
+    },
+    {
+     "label": "165W",
+     "weight_kg": [
+      82,
+      118
+     ],
+     "waist": 268.0,
+     "setback": 40.0,
+     "contact": 1210.0,
+     "radius": 8.0,
+     "sidecut_depth": 22.8,
+     "ref_stance": 560.0,
+     "nose_w": 319.6,
+     "tail_w": 307.6,
+     "eff_edge": 1267.0,
+     "length": 1650.0,
+     "taper": 12.0
+    }
+   ]
+  },
+  {
+   "id": "burton-family-tree-full-nelson-camber",
+   "brand": "Burton",
+   "name": "Family Tree Full Nelson Camber",
+   "gender": "men",
+   "url": "https://www.burton.com/en-us/products/burton-family-tree-full-nelson-camber-snowboard-307831",
+   "image": "https://www.burton.com/cdn/shop/files/3078311ACF_1.webp?v=1783957381&width=2880",
+   "description": "Shop the Family Tree Full Nelson Camber Snowboard 2027. Pillow drops, tree lines, and open faces call.",
+   "shape_raw": "Directional",
+   "shape": "Directional",
+   "profile_raw": "Directional Camber",
+   "profile": "directional_camber",
+   "flex": 8.0,
+   "flex_text": "Stiff & Aggressive",
+   "flex_type": "Directional",
+   "terrain": {
+    "park": 3.0,
+    "all_mountain": 8.0,
+    "powder": 10.0
+   },
+   "level": null,
+   "tail_style": null,
+   "popular": false,
+   "sizes": [
+    {
+     "label": "149",
+     "weight_kg": [
+      45,
+      68
+     ],
+     "waist": 250.0,
+     "setback": 22.5,
+     "contact": 1025.0,
+     "radius": 7.7,
+     "sidecut_depth": 17.0,
+     "ref_stance": 530.0,
+     "nose_w": 287.0,
+     "tail_w": 281.0,
+     "eff_edge": 1096.0,
+     "length": 1490.0,
+     "taper": 6.0
+    },
+    {
+     "label": "153",
+     "weight_kg": [
+      54,
+      82
+     ],
+     "waist": 258.0,
+     "setback": 22.5,
+     "contact": 1055.0,
+     "radius": 8.0,
+     "sidecut_depth": 17.5,
+     "ref_stance": 530.0,
+     "nose_w": 296.0,
+     "tail_w": 290.0,
+     "eff_edge": 1128.0,
+     "length": 1530.0,
+     "taper": 6.0
+    },
+    {
+     "label": "157",
+     "weight_kg": [
+      68,
+      91
+     ],
+     "waist": 265.0,
+     "setback": 22.5,
+     "contact": 1085.0,
+     "radius": 8.2,
+     "sidecut_depth": 18.0,
+     "ref_stance": 560.0,
+     "nose_w": 304.0,
+     "tail_w": 298.0,
+     "eff_edge": 1160.0,
+     "length": 1570.0,
+     "taper": 6.0
+    },
+    {
+     "label": "161",
+     "weight_kg": [
+      82,
+      118
+     ],
+     "waist": 270.0,
+     "setback": 22.5,
+     "contact": 1115.0,
+     "radius": 8.4,
+     "sidecut_depth": 18.5,
+     "ref_stance": 560.0,
+     "nose_w": 310.0,
+     "tail_w": 304.0,
+     "eff_edge": 1192.0,
+     "length": 1610.0,
+     "taper": 6.0
+    },
+    {
+     "label": "165",
+     "weight_kg": [
+      82,
+      118
+     ],
+     "waist": 275.0,
+     "setback": 22.5,
+     "contact": 1145.0,
+     "radius": 8.6,
+     "sidecut_depth": 19.0,
+     "ref_stance": 560.0,
+     "nose_w": 315.9,
+     "tail_w": 309.9,
+     "eff_edge": 1224.0,
+     "length": 1650.0,
+     "taper": 6.0
     }
    ]
   },
@@ -1459,6 +1900,356 @@
      "ref_stance": 550.0,
      "stance_range": [
       510,
+      590
+     ]
+    }
+   ]
+  },
+  {
+   "id": "nidecker-sensor-pro",
+   "brand": "Nidecker",
+   "name": "Sensor Pro",
+   "gender": "men",
+   "url": "https://ca.nidecker.com/products/sensor-pro",
+   "image": "https://ca.nidecker.com/cdn/shop/files/N.27.SNM.SEP-Sensor_Pro-1.webp?v=1786452614",
+   "description": "Our most advanced true twin is the weapon of choice for rippers like Taylor Gold and Craig McMorris. Equally at home laying down podium runs or stacking footy in the street, it's built around our lightest core for uncompromised aerial agility. Full camber delivers precision edge control and insane ollie power, while its race-grade sintered base means that if you don't clear that knuckle, you're al",
+   "shape_raw": null,
+   "shape": "Twin",
+   "profile_raw": "Camber Pro",
+   "profile": "camber",
+   "flex": 8.0,
+   "flex_text": "Stiff",
+   "flex_type": null,
+   "terrain": {
+    "all_mountain": 8.0,
+    "powder": 6.0,
+    "park": 10.0
+   },
+   "level": null,
+   "tail_style": null,
+   "popular": true,
+   "sizes": [
+    {
+     "label": "150",
+     "weight_kg": [
+      50,
+      70
+     ],
+     "length": 1500.0,
+     "nose_len": 230.0,
+     "contact": 1080.0,
+     "eff_edge": 1160.0,
+     "tail_len": 230.0,
+     "radius": 7.3,
+     "nose_w": 286.0,
+     "underfoot_front": 255.0,
+     "waist": 246.0,
+     "underfoot_rear": 255.0,
+     "tail_w": 286.0,
+     "taper": 0.0,
+     "setback": 0.0,
+     "ref_stance": 520.0,
+     "stance_range": [
+      440,
+      560
+     ]
+    },
+    {
+     "label": "154",
+     "weight_kg": [
+      55,
+      75
+     ],
+     "length": 1540.0,
+     "nose_len": 230.0,
+     "contact": 1120.0,
+     "eff_edge": 1200.0,
+     "tail_len": 230.0,
+     "radius": 7.6,
+     "nose_w": 294.0,
+     "underfoot_front": 261.0,
+     "waist": 252.0,
+     "underfoot_rear": 261.0,
+     "tail_w": 294.0,
+     "taper": 0.0,
+     "setback": 0.0,
+     "ref_stance": 540.0,
+     "stance_range": [
+      460,
+      580
+     ]
+    },
+    {
+     "label": "158",
+     "weight_kg": [
+      65,
+      85
+     ],
+     "length": 1580.0,
+     "nose_len": 230.0,
+     "contact": 1160.0,
+     "eff_edge": 1240.0,
+     "tail_len": 230.0,
+     "radius": 7.9,
+     "nose_w": 297.0,
+     "underfoot_front": 264.0,
+     "waist": 254.0,
+     "underfoot_rear": 264.0,
+     "tail_w": 297.0,
+     "taper": 0.0,
+     "setback": 0.0,
+     "ref_stance": 560.0,
+     "stance_range": [
+      480,
+      600
+     ]
+    },
+    {
+     "label": "158W",
+     "weight_kg": [
+      65,
+      85
+     ],
+     "length": 1580.0,
+     "nose_len": 230.0,
+     "contact": 1160.0,
+     "eff_edge": 1240.0,
+     "tail_len": 230.0,
+     "radius": 7.9,
+     "nose_w": 309.0,
+     "underfoot_front": 275.0,
+     "waist": 265.0,
+     "underfoot_rear": 275.0,
+     "tail_w": 309.0,
+     "taper": 0.0,
+     "setback": 0.0,
+     "ref_stance": 560.0,
+     "stance_range": [
+      480,
+      600
+     ]
+    },
+    {
+     "label": "162",
+     "weight_kg": [
+      75,
+      null
+     ],
+     "length": 1620.0,
+     "nose_len": 230.0,
+     "contact": 1200.0,
+     "eff_edge": 1280.0,
+     "tail_len": 230.0,
+     "radius": 8.2,
+     "nose_w": 301.0,
+     "underfoot_front": 266.0,
+     "waist": 256.0,
+     "underfoot_rear": 266.0,
+     "tail_w": 301.0,
+     "taper": 0.0,
+     "setback": 0.0,
+     "ref_stance": 560.0,
+     "stance_range": [
+      480,
+      600
+     ]
+    }
+   ]
+  },
+  {
+   "id": "nidecker-beta-apx",
+   "brand": "Nidecker",
+   "name": "Beta APX",
+   "gender": "men",
+   "url": "https://ca.nidecker.com/products/beta-apx",
+   "image": "https://ca.nidecker.com/cdn/shop/files/N.26.SNU.BEX-Beta_APX-1_j646t9.webp?v=1786460929",
+   "description": "The Beta APX adds top drawer materials to an organic silhouette to create the ultimate backcountry dart. Plenty of volume in the nose provides surf-like float, while extra carbon, thinner sidewalls and a faster base bring even more speed and precision. A favourite of Japanese soul shredder Shin Biyajima, this is the perfect board for riders who enjoy following their instincts in natural terrain – ",
+   "shape_raw": null,
+   "shape": "Directional",
+   "profile_raw": "Surfy CamRock",
+   "profile": "camrock",
+   "flex": 6.0,
+   "flex_text": "Mid Stiff",
+   "flex_type": null,
+   "terrain": {
+    "all_mountain": 8.0,
+    "powder": 10.0,
+    "park": 2.0
+   },
+   "level": null,
+   "tail_style": "swallow",
+   "popular": false,
+   "sizes": [
+    {
+     "label": "157",
+     "weight_kg": [
+      65,
+      90
+     ],
+     "length": 1570.0,
+     "nose_len": 330.0,
+     "contact": 1030.0,
+     "eff_edge": 1180.0,
+     "tail_len": 210.0,
+     "radius": 7.6,
+     "nose_w": 300.0,
+     "underfoot_front": 265.0,
+     "waist": 256.0,
+     "underfoot_rear": 267.0,
+     "tail_w": 292.0,
+     "taper": 8.0,
+     "setback": 40.0,
+     "ref_stance": 540.0,
+     "stance_range": [
+      460,
+      580
+     ]
+    },
+    {
+     "label": "162",
+     "weight_kg": [
+      70,
+      95
+     ],
+     "length": 1620.0,
+     "nose_len": 330.0,
+     "contact": 1080.0,
+     "eff_edge": 1230.0,
+     "tail_len": 210.0,
+     "radius": 8.0,
+     "nose_w": 312.0,
+     "underfoot_front": 275.0,
+     "waist": 266.0,
+     "underfoot_rear": 276.0,
+     "tail_w": 302.0,
+     "taper": 10.0,
+     "setback": 50.0,
+     "ref_stance": 550.0,
+     "stance_range": [
+      470,
+      590
+     ]
+    },
+    {
+     "label": "165W",
+     "weight_kg": [
+      80,
+      null
+     ],
+     "length": 1650.0,
+     "nose_len": 330.0,
+     "contact": 1110.0,
+     "eff_edge": 1260.0,
+     "tail_len": 210.0,
+     "radius": 8.2,
+     "nose_w": 319.0,
+     "underfoot_front": 281.0,
+     "waist": 272.0,
+     "underfoot_rear": 281.0,
+     "tail_w": 308.0,
+     "taper": 11.0,
+     "setback": 50.0,
+     "ref_stance": 550.0,
+     "stance_range": [
+      470,
+      590
+     ]
+    }
+   ]
+  },
+  {
+   "id": "nidecker-sorel",
+   "brand": "Nidecker",
+   "name": "Sorel",
+   "gender": "men",
+   "url": "https://ca.nidecker.com/products/sorel",
+   "image": "https://ca.nidecker.com/cdn/shop/files/N.27.SNM.SOR-Sorel-1.webp?v=1787064393",
+   "description": "Drawing inspiration from snowboarding's earliest days, this directional charger blends retro aesthetics with advanced tech. An extended nose and shortened tail echo classic 80s and 90s silhouettes, while its Surfy CamRock profile delivers effortless float and smooth, connected turns. Lightweight core construction ensures exceptional agility, making this a natural choice for soulful riders who want",
+   "shape_raw": null,
+   "shape": "Directional",
+   "profile_raw": "Surfy CamRock",
+   "profile": "camrock",
+   "flex": 4.0,
+   "flex_text": "Mid Soft",
+   "flex_type": null,
+   "terrain": {
+    "all_mountain": 10.0,
+    "powder": 10.0,
+    "park": 2.0
+   },
+   "level": null,
+   "tail_style": null,
+   "popular": false,
+   "sizes": [
+    {
+     "label": "150",
+     "weight_kg": [
+      55,
+      65
+     ],
+     "length": 1500.0,
+     "nose_len": 350.0,
+     "contact": 920.0,
+     "tail_len": 195.0,
+     "radius": 6.8,
+     "nose_w": 305.0,
+     "underfoot_front": 271.0,
+     "waist": 260.0,
+     "underfoot_rear": 270.0,
+     "tail_w": 290.0,
+     "taper": 15.0,
+     "setback": 25.0,
+     "ref_stance": 520.0,
+     "stance_range": [
+      440,
+      560
+     ]
+    },
+    {
+     "label": "155",
+     "weight_kg": [
+      60,
+      75
+     ],
+     "length": 1550.0,
+     "nose_len": 350.0,
+     "contact": 970.0,
+     "tail_len": 195.0,
+     "radius": 7.0,
+     "nose_w": 311.0,
+     "underfoot_front": 276.0,
+     "waist": 265.0,
+     "underfoot_rear": 275.0,
+     "tail_w": 296.0,
+     "taper": 15.0,
+     "setback": 25.0,
+     "ref_stance": 540.0,
+     "stance_range": [
+      460,
+      580
+     ]
+    },
+    {
+     "label": "160",
+     "weight_kg": [
+      70,
+      85
+     ],
+     "length": 1600.0,
+     "nose_len": 350.0,
+     "contact": 1020.0,
+     "tail_len": 195.0,
+     "radius": 7.3,
+     "nose_w": 317.0,
+     "underfoot_front": 281.0,
+     "waist": 270.0,
+     "underfoot_rear": 280.0,
+     "tail_w": 302.0,
+     "taper": 15.0,
+     "setback": 25.0,
+     "ref_stance": 550.0,
+     "stance_range": [
+      470,
       590
      ]
     }
