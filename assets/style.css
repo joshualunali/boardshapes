@@ -1,3 +1,13 @@
+/*
+ * BoardShapes styles.
+ *
+ * Every colour is a custom property on :root, so the dark theme only has to
+ * redefine the tokens. Sections: theme tokens, base, top bar, shared
+ * controls, layout and sidebar, main column and stage, tables, toast, and
+ * responsive overrides.
+ */
+
+/* ---------- theme tokens (light) ---------- */
 :root {
   --bg: #f4f5f7;
   --panel: #ffffff;
@@ -18,6 +28,11 @@
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
   color-scheme: light;
 }
+/* Dark theme, applied in two cases (plain CSS can't share one block between
+   them, so the values are repeated):
+   1. the OS prefers dark and the user hasn't forced light with the theme
+      button (data-theme="light");
+   2. the user has chosen dark with the theme button (data-theme="dark"). */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0e1116;
@@ -55,7 +70,9 @@
   color-scheme: dark;
 }
 
+/* ---------- base ---------- */
 * { box-sizing: border-box; }
+/* Make the hidden attribute win even over elements given display: flex/grid. */
 [hidden] { display: none !important; }
 html, body { margin: 0; }
 body {
@@ -64,6 +81,7 @@ body {
   font: 14px/1.45 var(--font);
   -webkit-font-smoothing: antialiased;
 }
+/* Form controls don't inherit page typography by default. */
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 svg { display: block; }
@@ -80,6 +98,7 @@ svg { display: block; }
 .logo { width: 28px; height: 28px; fill: var(--accent); }
 .wordmark { font-size: 18px; letter-spacing: -.01em; }
 .wordmark b { font-weight: 700; }
+/* Compare / Database tab buttons. */
 .tabs { display: flex; gap: 4px; }
 .tab {
   border: 0; background: none; padding: 8px 12px; border-radius: 8px;
@@ -87,8 +106,11 @@ svg { display: block; }
 }
 .tab:hover { color: var(--text); background: var(--panel-2); }
 .tab.active { color: var(--text); background: var(--accent-soft); }
+/* Units, Share and theme controls, pushed to the right. */
 .top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 
+/* ---------- shared controls ---------- */
+/* Bordered button with an optional stroked icon. .sq makes it square. */
 .icon-btn {
   display: inline-flex; align-items: center; gap: 6px;
   height: 32px; padding: 0 10px;
@@ -99,6 +121,7 @@ svg { display: block; }
 .icon-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .icon-btn.sq { width: 32px; justify-content: center; padding: 0; font-size: 16px; }
 
+/* Segmented control: a row of buttons where the one with .on is selected. */
 .seg {
   display: inline-flex; padding: 2px; gap: 2px;
   background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
@@ -111,11 +134,15 @@ svg { display: block; }
 .seg.small button { padding: 3px 8px; font-size: 13px; }
 
 /* ---------- layout ---------- */
+/* Fixed-width sidebar next to a flexible main column. minmax(0, 1fr) lets
+   the main column shrink below its content's width (wide tables scroll
+   inside their wrapper instead of stretching the page). */
 .layout {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
   min-height: calc(100vh - 56px);
 }
+/* The sidebar stays in view below the top bar; only its board list scrolls. */
 .sidebar {
   position: sticky; top: 56px;
   height: calc(100vh - 56px);
@@ -123,12 +150,14 @@ svg { display: block; }
   border-right: 1px solid var(--border);
   display: flex; flex-direction: column;
 }
+/* The toggle is only shown on narrow screens (see the responsive section). */
 .sidebar-toggle { display: none; }
 .sidebar-body {
   display: flex; flex-direction: column; gap: 12px;
   padding: 16px; min-height: 0; flex: 1;
 }
 
+/* Search box with the magnifier icon drawn inside the input. */
 .search { position: relative; }
 .search svg {
   position: absolute; left: 10px; top: 50%; translate: 0 -50%;
@@ -140,6 +169,7 @@ svg { display: block; }
 }
 .search input:focus, .rider input:focus, select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 
+/* Filter chips (brand, shape, profile family); .on = active. */
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
   border: 1px solid var(--border); background: var(--panel);
@@ -148,13 +178,19 @@ svg { display: block; }
 .chip:hover { border-color: var(--border-strong); color: var(--text); }
 .chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
 .filter-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+/* Checkbox with its label text. */
 .check { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; cursor: pointer; user-select: none; white-space: nowrap; }
 .check input { accent-color: var(--accent); margin: 0; }
 
+/* "Shape, profile & flex" disclosure. */
 .more-filters summary { cursor: pointer; color: var(--muted); font-size: 13px; padding: 2px 0; }
 .more-filters[open] { display: flex; flex-direction: column; gap: 8px; }
 .more-filters[open] summary { margin-bottom: 2px; }
 .range-label { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; }
+/* Dual-thumb flex slider: two range inputs stacked on top of each other.
+   The inputs ignore the pointer and only their thumbs accept it, so either
+   thumb can be dragged; the second input's track is transparent so only
+   one track shows. */
 .dual-range { position: relative; height: 22px; }
 .dual-range input {
   position: absolute; inset: 0; width: 100%; margin: 0;
@@ -167,6 +203,7 @@ svg { display: block; }
 .dual-range input::-moz-range-track { height: 4px; background: var(--border); border-radius: 2px; }
 .dual-range input + input::-webkit-slider-runnable-track { background: transparent; }
 
+/* "Your weight" box. */
 .rider {
   padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel-2);
 }
@@ -179,19 +216,24 @@ svg { display: block; }
 .rider-inputs .check { margin-left: auto; }
 .hint { margin: 6px 0 0; font-size: 12px; color: var(--faint); }
 
+/* Result count + sort dropdown above the list (and the Align dropdown). */
 .list-head { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--muted); }
 .list-head select, .field select {
   height: 28px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); padding: 0 6px; font-size: 13px;
 }
+/* Board list: fills the rest of the sidebar and scrolls. Negative side
+   margins let row highlights reach the sidebar edges. */
 .board-list {
   list-style: none; margin: 0 -16px; padding: 0 8px 16px;
   overflow-y: auto; flex: 1; min-height: 0;
 }
+/* Brand sub-heading that sticks to the top while its boards scroll past. */
 .brand-head {
   position: sticky; top: 0; z-index: 1;
   padding: 10px 8px 4px; background: var(--panel);
   font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--faint);
 }
+/* One board row: thumbnail | name + subtitle | colour dot. */
 .board-item {
   display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 10px;
   padding: 6px 8px; border-radius: 8px; cursor: pointer;
@@ -208,11 +250,13 @@ svg { display: block; }
 .board-item .nm { font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .board-item .sub { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .board-item .tag { font-size: 10px; padding: 1px 5px; border-radius: 4px; background: var(--panel-2); color: var(--muted); border: 1px solid var(--border); margin-left: 4px; vertical-align: 1px; }
+/* Empty ring when unselected; app.js fills it with the board's colour. */
 .board-item .dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border-strong); }
 .board-item.sel .dot { border-color: transparent; }
 
 /* ---------- main ---------- */
 .main { padding: 16px 20px 40px; min-width: 0; }
+/* Selected-board chips above the stage. */
 .selected { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; min-height: 38px; }
 .sel-chip {
   display: inline-flex; align-items: center; gap: 8px;
@@ -225,11 +269,13 @@ svg { display: block; }
 .sel-chip select { height: 26px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2); font-size: 13px; padding: 0 4px; }
 .sel-chip .x { border: 0; background: none; color: var(--faint); width: 22px; height: 22px; border-radius: 6px; font-size: 16px; line-height: 1; }
 .sel-chip .x:hover { background: var(--panel-2); color: var(--text); }
+/* A board hidden with the eye button is dimmed. */
 .sel-chip.hidden-board { opacity: .5; }
 .sel-chip .eye { border: 0; background: none; color: var(--faint); width: 22px; height: 22px; border-radius: 6px; padding: 3px; }
 .sel-chip .eye svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
 .sel-chip .eye:hover { color: var(--text); background: var(--panel-2); }
 
+/* View / Align / toggles / zoom toolbar. */
 .toolbar {
   display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
   margin-bottom: 10px;
@@ -238,9 +284,12 @@ svg { display: block; }
 .toggles { display: flex; gap: 12px; flex-wrap: wrap; }
 .zoom { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 .zoom-presets { display: inline-flex; gap: 2px; margin-left: 4px; }
+/* Text-style button (Nose / Waist / Tail presets). */
 .link-btn { border: 0; background: none; color: var(--accent); font-size: 13px; padding: 4px 6px; border-radius: 6px; }
 .link-btn:hover { background: var(--accent-soft); }
 
+/* Stage: the panel holding both SVG views. touch-action: none hands touch
+   gestures to the app's pointer handlers instead of scrolling the page. */
 .stage {
   position: relative;
   background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
@@ -254,10 +303,12 @@ svg { display: block; }
 }
 .view-label span { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--faint); }
 .view-label input[type=range] { width: 110px; accent-color: var(--accent); }
+/* height: auto makes each SVG's height follow its viewBox aspect ratio. */
 .board-svg { width: 100%; height: auto; cursor: crosshair; user-select: none; }
 .board-svg.panning { cursor: grabbing; }
 .board-svg .outline { cursor: grab; }
 .board-svg .outline:active { cursor: grabbing; }
+/* Classes set on SVG elements by app.js. */
 .board-svg text { font-family: var(--font); fill: var(--muted); }
 .board-svg .grid-minor { stroke: var(--grid-minor); }
 .board-svg .grid-major { stroke: var(--grid-major); }
@@ -267,6 +318,8 @@ svg { display: block; }
 .board-svg .cursor-line { stroke: var(--text); stroke-opacity: .5; stroke-dasharray: 4 4; }
 .board-svg .end-label { font-weight: 600; letter-spacing: .08em; fill: var(--faint); }
 
+/* Hover readout that follows the pointer. pointer-events: none so it never
+   blocks the SVG underneath. */
 .readout {
   position: absolute; pointer-events: none; z-index: 5;
   min-width: 170px; padding: 8px 10px;
@@ -275,11 +328,13 @@ svg { display: block; }
   font-size: 12px;
 }
 .readout .rh { color: var(--muted); margin-bottom: 4px; font-family: var(--mono); }
+/* Each row: colour swatch | board name | width. */
 .readout .rr { display: grid; grid-template-columns: 10px 1fr auto; gap: 6px; align-items: center; }
 .readout .rr i { width: 10px; height: 10px; border-radius: 2px; }
 .readout .rr b { font-family: var(--mono); font-weight: 600; }
 .readout .rr span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
 
+/* "Pick boards…" overlay covering the stage when nothing is shown. */
 .empty {
   position: absolute; inset: 0; display: grid; place-items: center;
   color: var(--muted); font-size: 15px; background: var(--panel);
@@ -291,7 +346,10 @@ svg { display: block; }
   overflow-x: auto;
   background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
 }
+/* tabular-nums gives digits equal widths so numbers line up in columns. */
 table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+/* Spec comparison table. The row-label column sticks to the left while
+   wide comparisons scroll sideways. */
 .spec-table th, .spec-table td { padding: 7px 12px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
 .spec-table tr:last-child td, .spec-table tr:last-child th { border-bottom: 0; }
 .spec-table thead th { vertical-align: bottom; background: var(--panel-2); }
@@ -305,16 +363,21 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
 .spec-table .section td { background: var(--panel-2); }
 /* differences vs. the first board: neutral, not good/bad */
 .spec-table .delta { font-size: 11px; margin-left: 6px; font-family: var(--mono); color: var(--faint); }
+/* Missing value (—) and estimated value (*). */
 .spec-table .na { color: var(--faint); }
 .spec-table .est { color: var(--muted); font-style: italic; }
 .spec-table a { color: var(--accent); text-decoration: none; }
 .spec-table a:hover { text-decoration: underline; }
+/* Rating bar (flex, terrain): app.js sets the inner <i>'s width as a %. */
 .bar { display: inline-block; vertical-align: middle; width: 70px; height: 6px; border-radius: 3px; background: var(--border); position: relative; margin-right: 8px; overflow: hidden; }
 .bar > i { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: var(--accent); }
 .terrain { display: grid; grid-template-columns: auto 60px; gap: 2px 8px; align-items: center; font-size: 12px; color: var(--muted); }
 .terrain .bar { width: 60px; margin: 0; }
 .footnote { font-size: 12px; color: var(--faint); margin: 10px 2px; max-width: 900px; }
 
+/* Database tab: scrolls inside its own box with a sticky header row.
+   Numbers are right-aligned; the first four columns (checkbox, brand,
+   model, size) are left-aligned. */
 .db-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .db-head p { margin: 0; color: var(--muted); }
 .table-wrap.db { max-height: calc(100vh - 150px); overflow: auto; }
@@ -332,6 +395,9 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
 .db-table td.model { font-weight: 550; }
 .db-table input { accent-color: var(--accent); }
 
+/* ---------- toast ---------- */
+/* Hidden just below its resting spot; .show fades and slides it in.
+   Colours are inverted (text colour as background) so it stands out. */
 .toast {
   position: fixed; left: 50%; bottom: 24px; translate: -50% 20px; opacity: 0;
   padding: 8px 14px; border-radius: 8px; background: var(--text); color: var(--bg);
@@ -340,6 +406,9 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
 .toast.show { opacity: 1; translate: -50% 0; }
 
 /* ---------- responsive ---------- */
+/* Narrow screens: a single column with the sidebar stacked on top and
+   collapsed behind the "Boards" toggle; button labels and the wordmark are
+   hidden to save space. */
 @media (max-width: 900px) {
   .topbar { gap: 12px; padding: 0 12px; }
   .wordmark { display: none; }
@@ -354,6 +423,7 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
     border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); font-weight: 600;
   }
   .sidebar-toggle span { color: var(--muted); font-weight: 400; }
+  /* Caret flips when expanded. */
   .sidebar-toggle::after { content: "▾"; color: var(--muted); margin-left: auto; }
   .sidebar-toggle[aria-expanded="true"]::after { content: "▴"; }
   .sidebar-body { display: none; padding-top: 0; }
@@ -361,5 +431,7 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
   .sidebar.open .board-list { max-height: 50vh; }
   .main { padding: 12px 16px 32px; }
   .zoom { margin-left: 0; }
+  /* The mouse/keyboard hints are hidden on small screens, which are mostly
+     touch devices. */
   .stage-hint { display: none; }
 }

@@ -14,6 +14,19 @@ Usage:
   python scraper/scrape.py              # fetch (polite, cached) + parse
   python scraper/scrape.py --offline    # re-parse cached HTML only
   python scraper/scrape.py --brand jones
+  python scraper/scrape.py --import-dir scraper/saved   # parse pages saved
+                                                        # from a browser
+
+Pipeline overview:
+  1. collection_links()  - walk each brand's men's/women's collection pages
+                           and collect product URLs that look like snowboards
+  2. fetch()             - download each product page (or read it from cache)
+  3. parse_product()     - pull the size-chart <table>s (parse_tables), turn
+                           each size column into a normalized record in mm / kg
+                           (build_sizes), and read brand-specific metadata such
+                           as shape, profile, flex and terrain (META[brand])
+  4. main()              - merge with existing data, apply overrides.json,
+                           sort, and write data/boards.json + data/boards.js
 """
 import argparse
 import datetime as dt
@@ -29,15 +42,24 @@ import time
 import urllib.error
 import urllib.request
 
+# Project paths, all resolved relative to the repo root (one level above
+# this file's folder) so the script works from any working directory.
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 CACHE = ROOT / "scraper" / "cache"
 OUT_JSON = ROOT / "data" / "boards.json"
 OUT_JS = ROOT / "data" / "boards.js"
 OVERRIDES = ROOT / "scraper" / "overrides.json"
 
+# Browser-like User-Agent; the brand stores serve bot-challenge pages to
+# obviously scripted clients.
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/130.0 Safari/537.36")
 
+# Per-brand config:
+#   name        - display name written into the data
+#   base        - site origin that relative product links are joined to
+#   collections - (gender, path) pairs for the listing pages to crawl
+#   delay       - minimum seconds between requests to that host
 BRANDS = {
     "burton": {
         "name": "Burton",
@@ -84,6 +106,8 @@ SKIP_HANDLE = re.compile(
 
 
 def log(*a):
+    """Print progress to stderr (keeps stdout clean) and flush immediately
+    so messages show up during long rate-limit sleeps."""
     print(*a, file=sys.stderr, flush=True)
 
 
@@ -91,18 +115,31 @@ def log(*a):
 # Fetching (polite, cached, honours Retry-After)
 # --------------------------------------------------------------------------
 def _fetch_curl(url):
+    """Download `url` with the system curl binary.
+
+    Preferred over urllib when curl is installed: its TLS/HTTP fingerprint is
+    less likely to trip the stores' bot protection. Response headers are
+    dumped to cache/_hdr.txt (overwritten on every request) so the
+    Retry-After value can be read back after a 429/503.
+
+    Returns (status_code, body_text, retry_after_seconds_or_None).
+    """
     hdr = CACHE / "_hdr.txt"
     hdr.parent.mkdir(parents=True, exist_ok=True)
     p = subprocess.run(
         ["curl", "-s", "-L", "--compressed", "-A", UA,
          "-H", "Accept: text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
          "-H", "Accept-Language: en-US,en;q=0.9",
+         # -D writes headers to a file; -w appends a status marker after the
+         # body so the code can be split off the end of stdout.
          "-D", str(hdr), "-w", "\n__STATUS__%{http_code}", url],
         capture_output=True, timeout=60)
     out = p.stdout.decode("utf-8", "replace")
     body, _, status = out.rpartition("\n__STATUS__")
     retry = None
     try:
+        # With -L there may be several header blocks (one per redirect);
+        # the last Retry-After belongs to the final response.
         m = re.findall(r"(?im)^retry-after:\s*(\d+)", hdr.read_text("latin-1"))
         retry = int(m[-1]) if m else None
     except OSError:
@@ -111,6 +148,10 @@ def _fetch_curl(url):
 
 
 def _fetch_urllib(url):
+    """Pure-Python fallback used when curl isn't on PATH.
+
+    Same return shape as _fetch_curl: (status, body, retry_after).
+    """
     req = urllib.request.Request(url, headers={
         "User-Agent": UA,
         "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
@@ -119,22 +160,36 @@ def _fetch_urllib(url):
         with urllib.request.urlopen(req, timeout=60) as r:
             return r.status, r.read().decode("utf-8", "replace"), None
     except urllib.error.HTTPError as e:
+        # Only the delay-seconds form of Retry-After is handled (not dates).
         ra = e.headers.get("Retry-After")
         return e.code, "", int(ra) if ra and ra.isdigit() else None
 
 
-_last_hit = {}
+_last_hit = {}    # host -> time.time() of the last request, for rate limiting
 _refused = set()  # hosts that keep refusing us this run
 
 
 def fetch(url, cache_file, delay, offline=False):
+    """Return the HTML for `url`, using `cache_file` as a permanent cache.
+
+    - A cached copy is always returned without touching the network.
+    - In offline mode a cache miss returns None.
+    - Requests to the same host are spaced at least `delay` seconds apart,
+      plus up to 30% random jitter.
+    - Up to 3 attempts; non-404 failures back off for max(Retry-After, 60s)
+      times the attempt number. A host that fails all 3 is skipped for the
+      rest of the run.
+
+    Returns the page text, or None if it couldn't be fetched.
+    """
     if cache_file.exists():
         return cache_file.read_text("utf-8")
     if offline:
         return None
-    host = url.split("/")[2]
+    host = url.split("/")[2]  # "https://host/path" -> "host"
     if host in _refused:
         return None
+    # Sleep until `delay` seconds have passed since the last hit on this host.
     wait = _last_hit.get(host, 0) + delay - time.time()
     if wait > 0:
         time.sleep(wait + random.uniform(0, delay * 0.3))
@@ -142,6 +197,8 @@ def fetch(url, cache_file, delay, offline=False):
     for attempt in range(3):
         status, body, retry = getter(url)
         _last_hit[host] = time.time()
+        # A real product page is far larger than 5 KB; anything smaller is
+        # usually a bot-challenge or error stub that must not be cached.
         if status == 200 and len(body) > 5000:
             cache_file.parent.mkdir(parents=True, exist_ok=True)
             cache_file.write_text(body, "utf-8")
@@ -150,6 +207,7 @@ def fetch(url, cache_file, delay, offline=False):
             log(f"  404 {url}")
             return None
         if attempt < 2:
+            # Wait at least 60s, then 120s+ on the second retry.
             backoff = max(retry or 60, 60) * (attempt + 1)
             log(f"  HTTP {status} on {url} -> waiting {backoff}s")
             time.sleep(backoff)
@@ -161,20 +219,36 @@ def fetch(url, cache_file, delay, offline=False):
 
 
 def cache_name(url):
-    path = url.split("://", 1)[1].split("/", 1)[1]
+    """Turn a URL's path (and query) into a filesystem-safe cache filename.
+
+    e.g. "https://x.com/collections/mens?page=2" -> "collections_mens_page_2.html"
+    """
+    path = url.split("://", 1)[1].split("/", 1)[1]  # drop scheme and host
     return re.sub(r"[^a-zA-Z0-9]+", "_", path).strip("_")[:150] + ".html"
 
 
 # --------------------------------------------------------------------------
 # HTML helpers
 # --------------------------------------------------------------------------
+# These use regexes rather than an HTML parser so the script has no
+# third-party dependencies; the markup involved (tables, meta tags) is
+# simple enough for that.
 def strip_tags(s):
+    """Convert an HTML fragment (e.g. a table cell) to plain, single-spaced
+    text. <br> becomes a space so "7.8<br>8.2" doesn't fuse into "7.88.2"."""
     s = re.sub(r"<br\s*/?>", " ", s, flags=re.I)
     s = re.sub(r"<[^>]+>", "", s)
     return re.sub(r"\s+", " ", html.unescape(s)).strip()
 
 
 def page_lines(page):
+    """Flatten a whole page into its visible text, one text node per line.
+
+    Script/style/svg/noscript blocks are dropped first. Each tag becomes a
+    line break, so a spec rendered as <dt>Shape</dt><dd>Twin</dd> turns into
+    the consecutive lines "Shape", "Twin". The brand meta_* parsers rely on
+    that label-then-value pattern.
+    """
     s = re.sub(r"<(script|style|svg|noscript)\b.*?</\1>", "", page,
                flags=re.S | re.I)
     s = re.sub(r"<[^>]+>", "\n", s)
@@ -183,6 +257,10 @@ def page_lines(page):
 
 
 def meta_content(page, prop):
+    """Return the content of <meta property|name="prop" content="...">.
+
+    Attribute order varies between sites, so both orders are tried.
+    """
     m = re.search(r'<meta[^>]+(?:property|name)="%s"[^>]+content="([^"]*)"'
                   % re.escape(prop), page, re.I)
     if not m:
@@ -192,12 +270,14 @@ def meta_content(page, prop):
 
 
 def jsonld_product(page):
+    """Return the first schema.org Product object in the page's JSON-LD
+    <script> blocks (it holds a clean name and description), or {}."""
     for blk in re.findall(r'<script[^>]+application/ld\+json[^>]*>(.*?)</script>',
                           page, re.S | re.I):
         try:
             data = json.loads(blk)
         except ValueError:
-            continue
+            continue  # malformed block; try the next one
         items = data if isinstance(data, list) else [data]
         for it in items:
             if isinstance(it, dict) and it.get("@type") == "Product":
@@ -206,9 +286,21 @@ def jsonld_product(page):
 
 
 def parse_tables(page):
-    """Merge every size-chart table on the page into {label: {size: value}}."""
+    """Merge every size-chart table on the page into {label: {size: value}}.
+
+    A size chart is a table whose first header cell mentions "size" and
+    whose other header cells include at least one size label starting with
+    three digits ("154", "158W"). Rows are spec labels ("Waist Width (mm)"),
+    columns are sizes.
+
+    Returns (order, merged):
+      order  - size labels in the order first seen, e.g. ["150", "154", "158W"]
+      merged - {row label: {size label: raw cell text}}; when several tables
+               contain the same row, the first value seen wins.
+    """
     order, merged = [], {}
     for t in re.findall(r"<table\b.*?</table>", page, re.S | re.I):
+        # Build a 2-D grid of plain-text cells (th and td alike).
         rows = re.findall(r"<tr\b[^>]*>(.*?)</tr>", t, re.S | re.I)
         grid = [[strip_tags(c) for c in
                  re.findall(r"<t[hd]\b[^>]*>(.*?)</t[hd]>", r, re.S | re.I)]
@@ -218,7 +310,8 @@ def parse_tables(page):
             continue
         head = grid[0]
         if not re.search(r"size", head[0], re.I):
-            continue
+            continue  # not a size chart
+        # Normalize size labels: "158 W" -> "158W".
         sizes = [re.sub(r"\s+", "", h).upper() for h in head[1:]]
         if not any(re.match(r"^\d{3}", s) for s in sizes):
             continue
@@ -238,6 +331,10 @@ def parse_tables(page):
 # --------------------------------------------------------------------------
 # Value normalization
 # --------------------------------------------------------------------------
+# Maps a size-chart row label to an internal key. Matching is
+# case-insensitive and in list order: the first pattern that matches a label
+# wins, and the first label found for a key wins (see build_sizes). Order
+# therefore matters, e.g. the "(kg)" weight row is preferred over "(lbs)".
 FIELDS = [  # (regex on row label, key)
     (r"rider.?s? weight.*\(kg\)", "weight"),
     (r"rider.?s? weight.*\(lbs?\)", "weight_lbs"),
@@ -261,21 +358,29 @@ FIELDS = [  # (regex on row label, key)
     (r"^board weight", "board_weight"),
     (r"^surface area", "surface"),
 ]
+# Keys holding a single length; these are all converted to millimetres.
 LENGTH_KEYS = {"length", "nose_len", "tail_len", "contact", "eff_edge", "waist",
                "underfoot_front", "underfoot_rear", "nose_w", "tail_w",
                "sidecut_depth", "taper", "setback", "ref_stance"}
 # Unit assumed when neither the cell nor the row label states one
 DEFAULT_UNIT = {"setback": "mm", "taper": "mm", "sidecut_depth": "mm"}
+# Multiplier that converts each unit to millimetres.
 SCALE = {"mm": 1.0, "cm": 10.0, "m": 1000.0, "in": 25.4}
 
+# A number, allowing a leading minus and either "." or "," as the decimal
+# separator (European sites write "7,8").
 NUM_RE = re.compile(r"-?\d+(?:[.,]\d+)?")
 
 
 def nums(v):
+    """Return every number in the string `v` as a float."""
     return [float(x.replace(",", ".")) for x in NUM_RE.findall(v)]
 
 
 def unit_of(value, label):
+    """Work out the unit of a cell: first from the value itself ("25 mm"),
+    then from the row label ("Waist Width (cm)"). Returns None if neither
+    states one."""
     m = re.search(r"\d\s*(mm|cm|m|in)\b", value.lower())
     if m:
         return m.group(1)
@@ -284,6 +389,12 @@ def unit_of(value, label):
 
 
 def to_mm(key, value, label):
+    """Convert a length cell to millimetres (rounded to 0.1 mm).
+
+    The unit comes from the cell, the row label, DEFAULT_UNIT, or, as a last
+    resort, the magnitude: >= 100 is assumed to be mm (a 250 mm waist),
+    smaller is cm (a 25.0 cm waist). Returns None if the cell has no number.
+    """
     n = nums(value)
     if not n:
         return None
@@ -297,17 +408,24 @@ def to_mm(key, value, label):
 
 
 def parse_weight(value, label):
-    v = value.lower().replace("–", "-")
-    parts = v.split("/")
+    """Parse a rider-weight cell into [lo_kg, hi_kg].
+
+    Handles "54-82", "54–82 kg / 120–180 lbs", "120-180 lbs" and open-ended
+    "90+" (hi becomes None). Pounds are converted to kg. Returns None if no
+    number is found.
+    """
+    v = value.lower().replace("–", "-")  # en dash -> hyphen
+    parts = v.split("/")                 # "kg part / lbs part"
     kg_part = next((p for p in parts if "kg" in p), None)
     factor = 1.0
     if kg_part is None:
         if "kg" in label.lower() and "lb" not in label.lower():
             kg_part = v
         elif "lb" in v or "lb" in label.lower():
-            kg_part, factor = parts[0], 0.4536
+            kg_part, factor = parts[0], 0.4536  # lb -> kg
         else:
             kg_part = v
+    # abs() because NUM_RE reads the "-" in a range as a minus sign.
     n = [abs(x) * factor for x in nums(kg_part)]  # "54-82" -> 54, 82
     if not n:
         return None
@@ -317,11 +435,22 @@ def parse_weight(value, label):
 
 
 def size_number(label):
+    """Leading three digits of a size label as an int ("158W" -> 158), i.e.
+    the nominal length in cm. None if the label doesn't start with them."""
     m = re.match(r"(\d{3})", label)
     return int(m.group(1)) if m else None
 
 
 def build_sizes(order, merged):
+    """Turn parse_tables() output into a list of per-size spec records.
+
+    Each record has "label" plus whichever normalized fields the brand
+    publishes: lengths in mm, "radius" in metres, "weight_kg" as [lo, hi],
+    "stance_range" in mm, "board_weight_kg" and "surface_dm2". Sizes without
+    a plausible waist width are dropped, because the outline can't be drawn
+    without one.
+    """
+    # Decide which table row supplies each key (first matching label wins).
     keymap = {}
     for label in merged:
         for rx, key in FIELDS:
@@ -333,17 +462,23 @@ def build_sizes(order, merged):
         rec = {"label": s}
         for key, label in keymap.items():
             raw = merged[label].get(s)
+            # Skip empty cells and dash placeholders.
             if raw is None or not raw.strip() or raw.strip() in ("-", "–"):
                 continue
             if key in LENGTH_KEYS:
                 val = to_mm(key, raw, label)
                 if val is not None:
+                    # Some brands publish setback as a negative number.
                     rec[key] = abs(val) if key == "setback" else val
             elif key == "radius":
                 n = nums(raw)
                 if n:
+                    # Radius should be in metres; values in mm (e.g. 7800)
+                    # are scaled down.
                     if unit_of(raw, label) == "mm" or n[0] > 100:
                         n = [x / 1000 for x in n]
+                    # Progressive sidecuts list several radii ("7.5/8.2");
+                    # store their average and keep the original text.
                     rec["radius"] = round(sum(n) / len(n), 2)
                     if len(n) > 1:
                         rec["radius_raw"] = raw
@@ -352,6 +487,7 @@ def build_sizes(order, merged):
                 if w:
                     rec["weight_kg"] = w
             elif key == "weight_lbs":
+                # Only used when the chart has no kg row.
                 if "weight_kg" not in rec:
                     w = parse_weight(raw, label + " lbs")
                     if w:
@@ -369,6 +505,7 @@ def build_sizes(order, merged):
                 n = nums(raw)
                 if n:
                     rec["surface_dm2"] = n[0]
+        # No explicit length row: fall back to the nominal size in cm.
         if "length" not in rec and size_number(s):
             rec["length"] = size_number(s) * 10.0
         # derived / sanity
@@ -383,7 +520,13 @@ def build_sizes(order, merged):
 # --------------------------------------------------------------------------
 # Brand-specific metadata (shape / profile / flex / terrain)
 # --------------------------------------------------------------------------
+# Each meta_<brand>(lines) function takes the page_lines() of a product page
+# and returns a dict with any of: shape, profile, flex (1-10), flex_text,
+# flex_type, terrain ({park, all_mountain, powder} each 0-10) and level.
 def after(lines, pred, start=0, stop=None, offset=1):
+    """Find the first line in lines[start:stop] matching `pred` and return
+    the line `offset` positions after it (the value under a label), or None.
+    """
     stop = len(lines) if stop is None else min(stop, len(lines))
     for i in range(start, stop):
         if pred(lines[i]):
@@ -393,6 +536,7 @@ def after(lines, pred, start=0, stop=None, offset=1):
 
 
 def index_of(lines, pred, start=0):
+    """Index of the first line at or after `start` matching `pred`, or None."""
     for i in range(start, len(lines)):
         if pred(lines[i]):
             return i
@@ -400,14 +544,21 @@ def index_of(lines, pred, start=0):
 
 
 def meta_burton(lines):
+    """Read Burton's "Tech Specs", "Personality", "Terrain" and "Riding
+    Level" sections."""
     m = {}
+    # Tech Specs lists "Bend", "Shape" and "Flex", each followed by its
+    # value; only the 30 lines after the heading are searched.
     i = index_of(lines, lambda l: l == "Tech Specs")
     if i is not None:
         for key, out in (("Bend", "profile"), ("Shape", "shape"),
                          ("Flex", "flex_type")):
+            # k=key binds the current loop value inside the lambda.
             v = after(lines, lambda l, k=key: l == k, i, i + 30)
             if v:
                 m[out] = v
+    # Personality is a word scale, e.g. "(Soft to Medium)". Each word maps to
+    # a number and the average becomes the 1-10 flex rating.
     p = index_of(lines, lambda l: l == "Personality")
     if p is not None and p + 1 < len(lines) and lines[p + 1].startswith("("):
         pers = lines[p + 1].strip("() ")
@@ -416,6 +567,7 @@ def meta_burton(lines):
         hits = [v for k, v in cats.items() if k in pers.lower()]
         if hits:
             m["flex"] = round(sum(hits) / len(hits), 1)
+    # Terrain gives a percentage per category; divide by 10 for a 0-10 score.
     t = index_of(lines, lambda l: l == "Terrain")
     if t is not None:
         terr = {}
@@ -428,6 +580,7 @@ def meta_burton(lines):
                     terr[key] = round(int(pct[-1]) / 10, 1)
         if terr:
             m["terrain"] = terr
+    # Riding Level: whichever level names appear in the next few lines.
     r = index_of(lines, lambda l: l == "Riding Level")
     if r is not None:
         lv = [l for l in lines[r + 1:r + 6] if l in ("Beginner", "Intermediate", "Expert")]
@@ -437,19 +590,24 @@ def meta_burton(lines):
 
 
 def meta_jones(lines):
+    """Read Jones's bracketed spec labels ("[Shape]", "[Profile]"), the
+    "Personality/Flex" block and the terrain ratings."""
     m = {}
     v = after(lines, lambda l: l == "[Shape]")
     if v:
         m["shape"] = v
+    # The site sometimes spells the label "[Pr0file]" with a zero.
     v = after(lines, lambda l: re.fullmatch(r"\[Pr[o0]file\]", l) is not None)
     if v:
         m["profile"] = v
+    # "Personality/Flex" is followed by a description, then a numeric rating.
     i = index_of(lines, lambda l: l == "Personality/Flex")
     if i is not None:
         m["flex_text"] = lines[i + 1]
         n = nums(lines[i + 2]) if i + 2 < len(lines) else []
         if n:
             m["flex"] = n[0]
+    # Each terrain category is followed by its rating, already out of 10.
     terr = {}
     for name, key in (("All-mountain / Resort", "all_mountain"),
                       ("Freeride / Powder", "powder"),
@@ -463,6 +621,8 @@ def meta_jones(lines):
 
 
 def meta_nidecker(lines):
+    """Read Nidecker's "Flex rating: x/5"-style lines and the "Shape and
+    Profile" block. Ratings out of 5 are rescaled to 0-10."""
     m = {}
     i = index_of(lines, lambda l: l == "Flex")
     if i is not None and i + 1 < len(lines):
@@ -471,7 +631,9 @@ def meta_nidecker(lines):
     if v:
         n = nums(v)
         if n:
+            # "Flex rating: 3/5" -> 6.0 (the denominator defaults to 5).
             m["flex"] = round(n[0] / (n[1] if len(n) > 1 else 5) * 10, 1)
+    # "Camber - poppy and precise" -> "Camber"
     v = after(lines, lambda l: l == "Shape and Profile")
     if v:
         m["profile"] = re.split(r"\s+[-–]\s+", v)[0].strip()
@@ -487,10 +649,20 @@ def meta_nidecker(lines):
     return m
 
 
+# Brand key -> metadata parser.
 META = {"burton": meta_burton, "jones": meta_jones, "nidecker": meta_nidecker}
 
 
 def classify_shape(shape_raw, text, sizes):
+    """Bucket a board into "Twin", "Directional Twin" or "Directional".
+
+    Evidence is tried from strongest to weakest:
+      1. the brand's own shape label (shape_raw)
+      2. keywords in the name/description (`text`)
+      3. the geometry of the middle size: taper of 5 mm or more means
+         Directional; otherwise the nose-vs-tail length difference decides
+      4. any mention of "twin", then a default of Directional
+    """
     s = (shape_raw or "").lower()
     if "twin" in s and "directional" in s:
         return "Directional Twin"
@@ -507,7 +679,7 @@ def classify_shape(shape_raw, text, sizes):
     if mid.get("taper", 0) >= 5:
         return "Directional"
     if mid.get("nose_len") and mid.get("tail_len"):
-        d = mid["nose_len"] - mid["tail_len"]
+        d = mid["nose_len"] - mid["tail_len"]  # mm the nose is longer by
         if d <= 2:
             return "Twin"
         return "Directional Twin" if d <= 25 else "Directional"
@@ -517,6 +689,15 @@ def classify_shape(shape_raw, text, sizes):
 
 
 def classify_profile(p):
+    """Map a brand's free-text profile name to one of the profile keys that
+    assets/geometry.js knows how to draw:
+
+      camber, camrock, directional_camrock, directional_camber,
+      flat, directional_flat, rocker, hybrid_rocker
+
+    Checks run from most to least specific; unknown or missing values fall
+    back to "camber".
+    """
     s = (p or "").lower()
     if not s:
         return "camber"
@@ -534,6 +715,9 @@ def classify_profile(p):
 
 
 def detect_tail(text):
+    """Spot unusual tail shapes from the name/description: "swallow" (fish or
+    split tail) or "blunt" (squash tail). None for a normal rounded tail.
+    geometry.js uses this to pick how the tail tip is drawn."""
     t = text.lower()
     if re.search(r"swallow|fish ?tail|\bfish\b|split tail", t):
         return "swallow"
@@ -543,16 +727,21 @@ def detect_tail(text):
 
 
 def clean_name(raw, brand_name):
-    n = raw.split("|")[0]
+    """Reduce a product title to the bare model name.
+
+    e.g. "Men's Burton Custom Camber Snowboard 2026 | Burton" -> "Custom Camber"
+    """
+    n = raw.split("|")[0]  # drop the " | Site name" suffix
     n = re.sub(r"(?i)\b(men'?s|women'?s|unisex|kids'?)\s+", "", n)
     n = re.sub(r"(?i)\b%s\b\s*" % re.escape(brand_name), "", n)
     n = re.sub(r"(?i)\bsnowboard\b", "", n)
-    n = re.sub(r"\b20\d\d(/\d\d)?\b", "", n)
+    n = re.sub(r"\b20\d\d(/\d\d)?\b", "", n)  # model year: 2026 or 2025/26
     n = re.sub(r"\s+", " ", n).strip(" -–")
     return n
 
 
 def slugify(s):
+    """Lowercase, hyphen-separated id fragment: "Mind Expander" -> "mind-expander"."""
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
 
 
@@ -560,6 +749,12 @@ def slugify(s):
 # Main scrape
 # --------------------------------------------------------------------------
 def collection_links(brand, cfg, gender, path, offline):
+    """Collect product links from a brand's collection (listing) pages.
+
+    Follows ?page=N pagination for up to 5 pages, and stops early when a
+    page adds no new products or doesn't link to the next page. Returns
+    site-relative hrefs such as "/en-us/products/mens-custom-snowboard".
+    """
     links, seen = [], set()
     for page_no in range(1, 6):
         url = cfg["base"] + path + (f"?page={page_no}" if page_no > 1 else "")
@@ -568,10 +763,13 @@ def collection_links(brand, cfg, gender, path, offline):
         if not page:
             break
         new = 0
+        # Product links, optionally with a locale prefix like /en-us.
         for href in re.findall(r'href="((?:/[a-z]{2}(?:-[a-z]{2,3})?)?/products/[^"?#]+)', page):
             handle = href.rsplit("/", 1)[-1]
             if handle in seen or SKIP_HANDLE.search(handle):
                 continue
+            # Burton and Jones also list accessories in these collections;
+            # their board handles always contain "snowboard".
             if brand in ("burton", "jones") and "snowboard" not in handle:
                 continue
             seen.add(handle)
@@ -584,6 +782,7 @@ def collection_links(brand, cfg, gender, path, offline):
 
 
 def scrape_product(brand, cfg, gender, href, offline):
+    """Fetch one product page and parse it into a board record (or None)."""
     url = cfg["base"] + href
     page = fetch(url, CACHE / brand / cache_name(url), cfg["delay"], offline)
     if not page:
@@ -593,6 +792,7 @@ def scrape_product(brand, cfg, gender, href, offline):
 
 def detect_brand(page):
     """Work out which brand a saved product page belongs to (for --import-dir)."""
+    # The page's own URL is in og:url or the canonical link.
     url = meta_content(page, "og:url")
     if not url:
         m = re.search(r'<link[^>]+rel="canonical"[^>]+href="([^"]+)"', page, re.I)
@@ -605,13 +805,19 @@ def detect_brand(page):
 
 
 def parse_product(brand, cfg, gender, url, page):
+    """Parse a product page into the board record written to boards.json.
+
+    `gender` is the collection the link came from; it is switched to "women"
+    if the product name says so. Returns None when the page has no usable
+    size chart.
+    """
     order, merged = parse_tables(page)
     sizes = build_sizes(order, merged)
     if not sizes:
         log(f"    no spec table: {url}")
         return None
     ld = jsonld_product(page)
-    raw_name = ld.get("name") or meta_content(page, "og:title") or href
+    raw_name = ld.get("name") or meta_content(page, "og:title") or url
     name = clean_name(html.unescape(raw_name), cfg["name"])
     lname = raw_name.lower()
     if "women" in lname:
@@ -619,6 +825,7 @@ def parse_product(brand, cfg, gender, url, page):
     desc = html.unescape(ld.get("description") or meta_content(page, "description") or "")
     lines = page_lines(page)
     meta = META[brand](lines)
+    # Normalize the product image to an absolute https URL.
     image = meta_content(page, "og:image") or ""
     if image.startswith("//"):
         image = "https:" + image
@@ -626,10 +833,14 @@ def parse_product(brand, cfg, gender, url, page):
         image = "https://" + image[len("http://"):]
     text_for_shape = " ".join([name, desc])
     board = {
+        # Women's versions often share the model name, so they get a "-w"
+        # suffix to keep ids unique.
         "id": f"{brand}-{slugify(name)}" + ("-w" if gender == "women" else ""),
         "brand": cfg["name"],
         "name": name,
         "gender": gender,
+        # Saved Burton pages may come from another locale (/en-gb/); link
+        # to the US store consistently.
         "url": re.sub(r"/en-[a-z]{2}/", "/en-us/", url) if brand == "burton" else url,
         "image": image,
         "description": desc[:400],
@@ -650,6 +861,7 @@ def parse_product(brand, cfg, gender, url, page):
 
 
 def main():
+    """Command-line entry point: scrape or import, merge, and write the data."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true", help="parse cached HTML only")
     ap.add_argument("--brand", choices=list(BRANDS), action="append")
@@ -658,6 +870,8 @@ def main():
                          "from your browser) instead of fetching; merges into "
                          "the existing data")
     args = ap.parse_args()
+    # Brands to crawl this run. An import crawls none: it only adds/replaces
+    # the boards found in the saved pages.
     brands = [] if args.import_dir else (args.brand or list(BRANDS))
 
     old_boards = (json.loads(OUT_JSON.read_text("utf-8"))["boards"]
@@ -675,9 +889,12 @@ def main():
             if not brand:
                 log(f"    ? can't tell which brand {f.name} is from - skipped")
                 continue
+            # Gender defaults to men; parse_product switches it to women if
+            # the product name says so.
             b = parse_product(brand, BRANDS[brand], "men", url, page)
             if not b:
                 continue
+            # An imported page replaces any existing board with the same id.
             boards = [x for x in boards if x["id"] != b["id"]]
             boards.append(b)
             log(f"    + {b['brand']} {b['name']} ({b['gender']}, {len(b['sizes'])} sizes)")
@@ -689,12 +906,15 @@ def main():
         for gender, path in cfg["collections"]:
             for href in collection_links(brand, cfg, gender, path, args.offline):
                 b = scrape_product(brand, cfg, gender, href, args.offline)
+                # Unisex boards appear in both collections; keep the first.
                 if not b or b["id"] in seen:
                     continue
                 seen.add(b["id"])
                 boards.append(b)
                 got += 1
                 log(f"    + {b['name']} ({b['gender']}, {len(b['sizes'])} sizes)")
+        # If the site blocked us entirely, don't wipe that brand from the
+        # data; carry over what the previous run found.
         if not got:
             keep = [b for b in old_boards if b["brand"].lower() == brand]
             if keep:
@@ -703,6 +923,8 @@ def main():
                 seen.update(b["id"] for b in keep)
 
     # manual corrections
+    # overrides.json maps board id -> fields to overwrite (whole top-level
+    # values are replaced, not deep-merged). Keys starting with "_" are notes.
     if OVERRIDES.exists():
         ov = json.loads(OVERRIDES.read_text("utf-8"))
         for b in boards:
@@ -710,6 +932,7 @@ def main():
                 if not k.startswith("_"):
                     b[k] = v
 
+    # By brand, then popular models first, then alphabetical.
     boards.sort(key=lambda b: (b["brand"], not b["popular"], b["name"]))
     out = {
         "generated": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -718,6 +941,8 @@ def main():
     }
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
     OUT_JSON.write_text(json.dumps(out, indent=1, ensure_ascii=False), "utf-8")
+    # The .js copy lets index.html load the data with a plain <script> tag,
+    # which works from file:// where fetch() of a .json file would be blocked.
     OUT_JS.write_text("window.BOARD_DATA = " + json.dumps(out, ensure_ascii=False)
                       + ";\n", "utf-8")
     log(f"wrote {len(boards)} boards -> {OUT_JSON.relative_to(ROOT)}")
