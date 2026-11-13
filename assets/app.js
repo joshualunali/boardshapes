@@ -797,7 +797,8 @@
       const row = (name, v) => isNum(v) ? [h('span', {}, name), h('span', { class: 'bar' }, h('i', { style: `width:${v * 10}%` }))] : [];
       return h('div', { class: 'terrain' }, row('All-mountain', t.all_mountain), row('Powder', t.powder), row('Park', t.park));
     } },
-    { label: 'Product page', node: (b) => h('a', { href: b.url, target: '_blank', rel: 'noopener' }, b.brand.toLowerCase() + '.com ↗') },
+    // Label the link with the site's real domain, e.g. "jonessnowboards.com".
+    { label: 'Product page', node: (b) => b.url ? h('a', { href: b.url, target: '_blank', rel: 'noopener' }, new URL(b.url).hostname.replace(/^www\./, '') + ' ↗') : null },
   ];
 
   // Build the comparison table (one column per selected board) and the
