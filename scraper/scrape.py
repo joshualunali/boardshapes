@@ -646,6 +646,14 @@ def meta_nidecker(lines):
                 terr[key] = round(n[0] / (n[1] if len(n) > 1 else 5) * 10, 1)
     if terr:
         m["terrain"] = terr
+    # The "Key Features" paragraphs (up to the Terrain ratings) describe the
+    # shape in more detail than the short description, e.g. "pinched-in
+    # swallow tail". Only used to detect the tail style; capped at 15 lines
+    # so it can't run on into reviews if the Terrain heading is missing.
+    k = index_of(lines, lambda l: l == "Key Features")
+    if k is not None:
+        end = index_of(lines, lambda l: l == "Terrain", k) or len(lines)
+        m["features"] = " ".join(lines[k + 1:min(end, k + 16)])
     return m
 
 
@@ -715,8 +723,9 @@ def classify_profile(p):
 
 
 def detect_tail(text):
-    """Spot unusual tail shapes from the name/description: "swallow" (fish or
-    split tail) or "blunt" (squash tail). None for a normal rounded tail.
+    """Spot unusual tail shapes from the name, description and any brand
+    feature text: "swallow" (fish or split tail) or "blunt" (squash tail).
+    None for a normal rounded tail.
     geometry.js uses this to pick how the tail tip is drawn."""
     t = text.lower()
     if re.search(r"swallow|fish ?tail|\bfish\b|split tail", t):
@@ -853,7 +862,9 @@ def parse_product(brand, cfg, gender, url, page):
         "flex_type": meta.get("flex_type"),
         "terrain": meta.get("terrain"),
         "level": meta.get("level"),
-        "tail_style": detect_tail(text_for_shape),
+        # Brand feature text (if the meta parser found any) helps here
+        # because tail shapes are often only mentioned there.
+        "tail_style": detect_tail(" ".join([text_for_shape, meta.get("features", "")])),
         "popular": any(p in name.lower() for p in POPULAR[brand]),
         "sizes": sizes,
     }
