@@ -10,7 +10,7 @@ sites. The outlines are rebuilt from the specs that Burton, Jones and Nidecker p
 <sub>Click the image to open this exact comparison: Custom Camber, Mountain Twin, Merc and Flagship
 for a 75 kg rider.</sub>
 
-## What you can do
+## Features
 
 - **Overlay outlines to scale.** Line boards up by board center, stance center, waist, nose or
   tail. Toggle the grid, stance markers, sidecut points and fill.
