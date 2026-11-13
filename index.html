@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BoardShapes · Snowboard shape comparison</title>
+  <meta name="description" content="Overlay and compare snowboard outlines and size charts from Burton, Jones and Nidecker.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 16c0-4 2-6 6-6.5 2.5-.3 4 .4 7 .4s4.5-.7 7-.4c4 .5 6 2.5 6 6.5s-2 6-6 6.5c-2.5.3-4-.4-7-.4s-4.5.7-7 .4C5 22 3 20 3 16z' fill='%232563eb'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><path d="M3 16c0-4 2-6 6-6.5 2.5-.3 4 .4 7 .4s4.5-.7 7-.4c4 .5 6 2.5 6 6.5s-2 6-6 6.5c-2.5.3-4-.4-7-.4s-4.5.7-7 .4C5 22 3 20 3 16z"/></svg>
+      <span class="wordmark">Board<b>Shapes</b></span>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" class="tab active" data-tab="compare" aria-selected="true">Compare</button>
+      <button role="tab" class="tab" data-tab="database" aria-selected="false">Database</button>
+    </nav>
+    <div class="top-actions">
+      <div class="seg" id="unitSeg" title="Units">
+        <button data-unit="metric" class="on">cm</button>
+        <button data-unit="imperial">in</button>
+      </div>
+      <button class="icon-btn" id="shareBtn" title="Copy link to this comparison">
+        <svg viewBox="0 0 24 24"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+        <span>Share</span>
+      </button>
+      <button class="icon-btn" id="themeBtn" title="Toggle light / dark">
+        <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-expanded="false">Boards <span id="boardCount"></span></button>
+      <div class="sidebar-body">
+        <div class="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <input id="search" type="search" placeholder="Search boards…" autocomplete="off">
+        </div>
+
+        <div class="filter-group">
+          <div class="chips" id="brandChips"></div>
+        </div>
+        <div class="filter-row">
+          <div class="seg small" id="genderSeg">
+            <button data-g="all" class="on">All</button>
+            <button data-g="men">Men's</button>
+            <button data-g="women">Women's</button>
+          </div>
+          <label class="check"><input type="checkbox" id="popularOnly"> Popular</label>
+        </div>
+        <details class="more-filters">
+          <summary>Shape, profile &amp; flex</summary>
+          <div class="chips" id="shapeChips"></div>
+          <div class="chips" id="profileChips"></div>
+          <label class="range-label">Flex <span id="flexOut">1–10</span></label>
+          <div class="dual-range">
+            <input type="range" id="flexMin" min="1" max="10" step="0.5" value="1">
+            <input type="range" id="flexMax" min="1" max="10" step="0.5" value="10">
+          </div>
+        </details>
+
+        <div class="rider">
+          <label for="riderWeight">Your weight</label>
+          <div class="rider-inputs">
+            <input id="riderWeight" type="number" min="20" max="200" inputmode="numeric" placeholder="—">
+            <span id="weightUnit">kg</span>
+            <label class="check" title="Prefer wide sizes (roughly US 11+ boots)"><input type="checkbox" id="wideOnly"> Wide</label>
+          </div>
+          <p class="hint">Picks the best size for each board from the brand's weight range.</p>
+        </div>
+
+        <div class="list-head">
+          <span id="resultCount"></span>
+          <select id="sortSel" aria-label="Sort">
+            <option value="popular">Popular first</option>
+            <option value="name">Name</option>
+            <option value="flex">Flex</option>
+            <option value="waist">Waist width</option>
+          </select>
+        </div>
+        <ul class="board-list" id="boardList"></ul>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section id="tab-compare" class="tab-panel">
+        <div class="selected" id="selected"></div>
+
+        <div class="toolbar">
+          <div class="seg" id="viewSeg">
+            <button data-view="both" class="on">Top + side</button>
+            <button data-view="top">Top</button>
+            <button data-view="side">Side</button>
+          </div>
+          <label class="field">Align
+            <select id="alignSel">
+              <option value="center">Board center</option>
+              <option value="stance">Stance center</option>
+              <option value="waist">Waist</option>
+              <option value="nose">Nose tips</option>
+              <option value="tail">Tail tips</option>
+            </select>
+          </label>
+          <div class="toggles">
+            <label class="check"><input type="checkbox" id="tGrid" checked> Grid</label>
+            <label class="check"><input type="checkbox" id="tStance" checked> Stance</label>
+            <label class="check"><input type="checkbox" id="tSidecut"> Sidecut</label>
+            <label class="check"><input type="checkbox" id="tFill" checked> Fill</label>
+          </div>
+          <div class="zoom">
+            <button class="icon-btn sq" id="zoomOut" title="Zoom out">−</button>
+            <button class="icon-btn" id="zoomFit" title="Fit all boards">Fit</button>
+            <button class="icon-btn sq" id="zoomIn" title="Zoom in">+</button>
+            <span class="zoom-presets">
+              <button class="link-btn" data-focus="nose">Nose</button>
+              <button class="link-btn" data-focus="waist">Waist</button>
+              <button class="link-btn" data-focus="tail">Tail</button>
+            </span>
+          </div>
+        </div>
+
+        <div class="stage" id="stage">
+          <div class="view-label" id="topLabel">Top view <span>· nose ←</span></div>
+          <svg id="topSvg" class="board-svg" role="img" aria-label="Top view of selected snowboard outlines"></svg>
+          <div class="view-label" id="sideLabel">Side profile <span>· schematic, camber/rocker ×<output id="exagOut">6</output></span>
+            <input type="range" id="exag" min="1" max="12" value="6" aria-label="Camber and rocker exaggeration">
+          </div>
+          <svg id="sideSvg" class="board-svg side" role="img" aria-label="Schematic side profile"></svg>
+          <div class="readout" id="readout" hidden></div>
+          <div class="empty" id="empty" hidden>
+            <p>Pick boards from the list to overlay their shapes.</p>
+          </div>
+        </div>
+        <p class="stage-hint">Hover to measure width · drag an outline to slide it · drag the background to pan · Ctrl + scroll or double-click to zoom</p>
+
+        <div class="table-wrap">
+          <table class="spec-table" id="specTable"></table>
+        </div>
+        <p class="footnote" id="footnote"></p>
+      </section>
+
+      <section id="tab-database" class="tab-panel" hidden>
+        <div class="db-head">
+          <p id="dbCount"></p>
+          <label class="check"><input type="checkbox" id="dbAllSizes"> Show every size</label>
+        </div>
+        <div class="table-wrap db">
+          <table class="db-table" id="dbTable"></table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="data/boards.js"></script>
+  <script src="assets/geometry.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

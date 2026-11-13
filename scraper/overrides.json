@@ -1,0 +1,7 @@
+{
+  "_comment": "Manual corrections merged over scraped data, keyed by board id. Keys starting with '_' are ignored. 'outline' tunes the drawn tips: nose_p / tail_p are superellipse exponents (2 = elliptical, 3.5+ = blunt), notch_depth (fraction of tail length) and notch_width (fraction of tail half-width) draw a swallowtail.",
+  "_example-board-id": {
+    "tail_style": "swallow",
+    "outline": { "nose_p": 2.0, "tail_p": 2.6, "notch_depth": 0.3, "notch_width": 0.45 }
+  }
+}

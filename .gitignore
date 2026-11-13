@@ -1,0 +1,12 @@
+# scraper HTTP cache (re-creatable)
+scraper/cache/
+
+# Python
+__pycache__/
+*.pyc
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
